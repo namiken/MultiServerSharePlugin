@@ -1,0 +1,3 @@
+debug : true
+read-file-dir : 'C:\Users\KENSUKE\Desktop\test\write'
+write-file-dir : 'C:\Users\KENSUKE\Desktop\test\write'
