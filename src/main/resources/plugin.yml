@@ -1,3 +1,14 @@
 name: ChestShare
 version: 1.0
 main: jp.thelow.chestShare.Main
+commands:
+   tpServer:
+      description: To Move Server.
+      usage: /<command> [server名] [プレイヤー名] [座標(world:x,y,z)]
+      permission: jp.thelow.staff.tpServer
+      permission-message: You don't have permission
+   csReload:
+      description: Reload Config.
+      usage: /<command>
+      permission: jp.thelow.staff.csReload
+      permission-message: You don't have permission

@@ -8,7 +8,7 @@ import java.util.Map;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.DoubleChest;
+import org.bukkit.block.Chest;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -54,7 +54,7 @@ public class DoubleChestData implements ConfigurationSerializable, ShareData {
       block2.setType(Material.CHEST);
     }
 
-    DoubleChest state = (DoubleChest) block2.getState();
+    Chest state = (Chest) block2.getState();
     Inventory inventory = state.getInventory();
     ItemStack[] array = contents.toArray(new ItemStack[contents.size()]);
 

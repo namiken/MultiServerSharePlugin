@@ -1,4 +1,4 @@
-package jp.thelow.chestShare.file;
+package jp.thelow.chestShare.util;
 
 import java.io.File;
 import java.io.IOException;

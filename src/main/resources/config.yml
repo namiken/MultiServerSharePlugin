@@ -1,3 +1,6 @@
-debug : true
-read-file-dir : 'C:\Users\KENSUKE\Desktop\test\write'
-write-file-dir : 'C:\Users\KENSUKE\Desktop\test\write'
+debug : false
+read-file-dir : 'C:\Users\Hoge\Desktop\test\write'
+write-file-dir : 'C:\Users\Hoge\Desktop\test\write'
+dungeon-only : false
+overworld-server : thelow
+auto-move-server: false
