@@ -3,21 +3,25 @@ package jp.thelow.chestShare;
 import java.io.File;
 
 import org.bukkit.Bukkit;
+import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
-import jp.thelow.chestShare.chest.ChestShareManager;
+import jp.thelow.chestShare.chest.DataSharedManager;
 import jp.thelow.chestShare.command.ReloadConfigCommand;
 import jp.thelow.chestShare.command.TeleportServerCommand;
+import jp.thelow.chestShare.domain.ChangeBlockData;
 import jp.thelow.chestShare.domain.ChestData;
 import jp.thelow.chestShare.domain.DoubleChestData;
 
@@ -33,6 +37,7 @@ public class Main extends JavaPlugin implements Listener {
   public void onEnable() {
     ConfigurationSerialization.registerClass(ChestData.class);
     ConfigurationSerialization.registerClass(DoubleChestData.class);
+    ConfigurationSerialization.registerClass(ChangeBlockData.class);
 
     Main.instance = this;
     this.getConfig().options().copyDefaults(true);
@@ -42,7 +47,7 @@ public class Main extends JavaPlugin implements Listener {
     createDir();
 
     getServer().getPluginManager().registerEvents(this, this);
-    ChestShareManager.start();
+    DataSharedManager.start();
 
     //コマンド
     Bukkit.getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
@@ -59,7 +64,7 @@ public class Main extends JavaPlugin implements Listener {
 
   @Override
   public void onDisable() {
-    ChestShareManager.close();
+    DataSharedManager.close();
   }
 
   //  @EventHandler
@@ -77,6 +82,21 @@ public class Main extends JavaPlugin implements Listener {
   //  }
 
   @EventHandler
+  public void onBlockBreakEvent(BlockBreakEvent e) {
+    changeBlock(e.getBlock());
+  }
+
+  public void changeBlock(Block block) {
+    new BukkitRunnable() {
+      @Override
+      public void run() {
+        DataSharedManager.onChangeBlock(block);
+      }
+    }.runTaskLater(this, 2);
+
+  }
+
+  @EventHandler
   public void InventoryCloseEvent(InventoryCloseEvent e) {
     InventoryView view = e.getView();
     Inventory topInventory = view.getTopInventory();
@@ -86,9 +106,9 @@ public class Main extends JavaPlugin implements Listener {
     if (holder == null) { return; }
 
     if (holder instanceof DoubleChest) {
-      ChestShareManager.onCloseDoubleChest((DoubleChest) holder);
+      DataSharedManager.onCloseDoubleChest((DoubleChest) holder);
     } else if (holder instanceof Chest) {
-      ChestShareManager.onCloseChest((Chest) holder);
+      DataSharedManager.onCloseChest((Chest) holder);
     }
   }
 

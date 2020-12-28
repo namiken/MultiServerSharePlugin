@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Player;
@@ -20,6 +21,7 @@ import org.bukkit.entity.Player;
 import jp.thelow.chestShare.Main;
 import jp.thelow.chestShare.Properties;
 import jp.thelow.chestShare.command.TeleportServerCommand;
+import jp.thelow.chestShare.domain.ChangeBlockData;
 import jp.thelow.chestShare.domain.ChestData;
 import jp.thelow.chestShare.domain.DoubleChestData;
 import jp.thelow.chestShare.domain.PlayerTeleportData;
@@ -27,7 +29,7 @@ import jp.thelow.chestShare.domain.ShareData;
 import jp.thelow.chestShare.util.ChestSerializeUtil;
 import jp.thelow.chestShare.util.CommonUtil;
 
-public class ChestShareManager {
+public class DataSharedManager {
 
   public static ExecutorService writeThread = Executors.newSingleThreadExecutor();
 
@@ -62,6 +64,16 @@ public class ChestShareManager {
     File file = new File(prooerties.getWriteFileDir(),
         Long.toString(System.currentTimeMillis()) + ".txt");
     writeThread.execute(() -> ChestSerializeUtil.write(chestData, file));
+  }
+
+  public static void onChangeBlock(Block block) {
+    ChangeBlockData changeBlockData = new ChangeBlockData();
+    changeBlockData.addBlock(block);
+
+    Properties prooerties = Main.getInstance().getProoerties();
+    File file = new File(prooerties.getWriteFileDir(),
+        Long.toString(System.currentTimeMillis()) + ".txt");
+    writeThread.execute(() -> ChestSerializeUtil.write(changeBlockData, file));
   }
 
   public static void start() {
