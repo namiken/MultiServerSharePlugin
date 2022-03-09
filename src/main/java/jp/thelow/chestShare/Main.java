@@ -1,17 +1,22 @@
 package jp.thelow.chestShare;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.InventoryView;
@@ -28,6 +33,8 @@ import jp.thelow.chestShare.domain.DoubleChestData;
 public class Main extends JavaPlugin implements Listener {
 
   public static final String TP_PLAYER_FOLDER_NAME = "tpPlayer";
+
+  public static Set<Player> noClickMap = new HashSet<>();
 
   private static Main instance;
 
@@ -81,19 +88,28 @@ public class Main extends JavaPlugin implements Listener {
   //    });
   //  }
 
-  @EventHandler
-  public void onBlockBreakEvent(BlockBreakEvent e) {
-    changeBlock(e.getBlock());
-  }
-
   public void changeBlock(Block block) {
     new BukkitRunnable() {
       @Override
       public void run() {
         DataSharedManager.onChangeBlock(block);
       }
-    }.runTaskLater(this, 2);
+    }.runTaskLater(this, 20);
 
+  }
+
+  @EventHandler
+  public void onQuit(PlayerQuitEvent e) {
+    noClickMap.remove(e.getPlayer());
+  }
+
+  @EventHandler
+  public void onInventoryOpenEvent(InventoryOpenEvent e) {
+    if (noClickMap.contains(e.getPlayer())) {
+      e.setCancelled(true);
+      e.getPlayer().sendMessage(ChatColor.GREEN + "カウントダウン中のため、クリック操作をキャンセルします。");
+      getLogger().info("カウントダウン中のため、クリック操作をキャンセルします。:" + e.getPlayer().getName());
+    }
   }
 
   @EventHandler

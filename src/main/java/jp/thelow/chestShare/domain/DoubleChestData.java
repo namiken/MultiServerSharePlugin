@@ -45,6 +45,8 @@ public class DoubleChestData implements ConfigurationSerializable, ShareData {
 
   @Override
   public void applyServer() {
+    if (rightLocation == null) { return; }
+
     Block block1 = rightLocation.getBlock();
     if (block1.getType() != Material.CHEST) {
       block1.setType(Material.CHEST);

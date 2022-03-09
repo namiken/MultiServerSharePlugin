@@ -39,6 +39,7 @@ public class ChestData implements ConfigurationSerializable, ShareData {
 
   @Override
   public void applyServer() {
+    if (chestLocation == null) { return; }
     Block block = chestLocation.getBlock();
     if (block.getType() != Material.CHEST) {
       block.setType(Material.CHEST);

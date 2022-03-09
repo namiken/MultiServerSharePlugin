@@ -10,6 +10,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import com.google.common.io.Files;
 
 import jp.thelow.chestShare.domain.ShareData;
+import jp.thelow.core.Main;
 
 public class ChestSerializeUtil {
   /**
@@ -21,11 +22,26 @@ public class ChestSerializeUtil {
   public static ShareData read(File file) {
     YamlConfiguration configuration = new YamlConfiguration();
     try {
-      configuration.load(file);
-      return (ShareData) configuration.get("data");
+      Exception ex = null;
+      //最大2回リトライ処理を行う
+      for (int i = 0; i < 3; i++) {
+        try {
+          configuration.load(file);
+          return (ShareData) configuration.get("data");
+        } catch (IllegalArgumentException e) {
+          Main.plugin.getLogger().info("skip:" + e.getMessage());
+          return null;
+        } catch (Exception e) {
+          ex = e;
+          //エラーが発生したら300ms待つ
+          Thread.sleep(100 * 3);
+        }
+      }
+      throw ex;
     } catch (Exception e) {
       try {
-        System.out.println(Files.readLines(file, StandardCharsets.UTF_8).stream().collect(Collectors.joining("\n")));
+        Main.plugin.getLogger()
+            .info(Files.readLines(file, StandardCharsets.UTF_8).stream().collect(Collectors.joining("\n")));
         e.printStackTrace();
       } catch (IOException e1) {
         e1.printStackTrace();

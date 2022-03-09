@@ -54,16 +54,18 @@ public class TeleportServerCommand implements CommandExecutor {
     if (loc != null) {
       p.teleport(loc, TeleportCause.UNKNOWN);
     }
-    p.saveData();
+    //    p.saveData();
 
     if (Main.getInstance().getServer().getPluginManager().isPluginEnabled("DungeonCore")) {
       TheLowPlayerManager.saveData(p);
     }
 
-    p.sendMessage(ChatColor.GREEN + "3秒後に移動します。");
+    //クリックできないようにする
+    Main.noClickMap.add(p);
+    p.sendMessage(ChatColor.GREEN + "別鯖に移動します。");
 
     //1秒後に別鯖にTPする
-    TheLowExecutor.executeLater(20 * 3, () -> {
+    TheLowExecutor.executeLater(1, () -> {
       ByteArrayOutputStream b = new ByteArrayOutputStream();
       DataOutputStream out = new DataOutputStream(b);
       try {
@@ -73,6 +75,11 @@ public class TeleportServerCommand implements CommandExecutor {
         localIOException.printStackTrace();
       }
       p.sendPluginMessage(Main.getInstance(), "BungeeCord", b.toByteArray());
+    });
+
+    //クリック制限を解除
+    TheLowExecutor.executeLater(20 * 3, () -> {
+      Main.noClickMap.remove(p);
     });
 
     //5秒後に鯖にいる場合はTP失敗と判断する
