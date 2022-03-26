@@ -4,4 +4,5 @@ write-file-dir : 'C:\Users\Hoge\Desktop\test\write'
 dungeon-only : false
 overworld-server : thelow
 auto-move-server: false
+auto-save: true
 

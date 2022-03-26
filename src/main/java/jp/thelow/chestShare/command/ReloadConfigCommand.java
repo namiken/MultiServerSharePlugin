@@ -14,7 +14,7 @@ public class ReloadConfigCommand implements CommandExecutor {
     Properties prooerties = Main.getInstance().getProoerties();
     prooerties.reload(Main.getInstance().getConfig());
 
-    sender.sendMessage(Main.getInstance().getProoerties().toString());
+    sender.sendMessage(prooerties.toString());
     return true;
   }
 }

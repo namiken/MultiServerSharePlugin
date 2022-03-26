@@ -33,5 +33,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="C:/Users/KENSUKE/Documents/Naminez/plugins/DungeonCore-0.0.1-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="F:/Users/Ken/minecraft/開発用thelow_1.8/spigot.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/thelowSql"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

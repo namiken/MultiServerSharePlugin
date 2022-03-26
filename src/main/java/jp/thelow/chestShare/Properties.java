@@ -2,6 +2,9 @@ package jp.thelow.chestShare;
 
 import org.bukkit.configuration.file.FileConfiguration;
 
+import lombok.Data;
+
+@Data
 public class Properties {
 
   private String readFileDir;
@@ -16,56 +19,10 @@ public class Properties {
 
   private String overworldServer;
 
+  private boolean autoSave;
+
   public Properties(FileConfiguration config) {
     reload(config);
-  }
-
-  public String getReadFileDir() {
-    return readFileDir;
-  }
-
-  public void setReadFileDir(String readFileDir) {
-    this.readFileDir = readFileDir;
-  }
-
-  public String getWriteFileDir() {
-    return writeFileDir;
-  }
-
-  public void setWriteFileDir(String writeFileDir) {
-    this.writeFileDir = writeFileDir;
-  }
-
-  public boolean isDebug() {
-    return isDebug;
-  }
-
-  public void setDebug(boolean isDebug) {
-    this.isDebug = isDebug;
-  }
-
-  public boolean isDungeonOnly() {
-    return isDungeonOnly;
-  }
-
-  public void setDungeonOnly(boolean isDungeonOnly) {
-    this.isDungeonOnly = isDungeonOnly;
-  }
-
-  public String getOverworldServer() {
-    return overworldServer;
-  }
-
-  public void setOverworldServer(String overworldServer) {
-    this.overworldServer = overworldServer;
-  }
-
-  public boolean isAutoMoveServer() {
-    return isAutoMoveServer;
-  }
-
-  public void setAutoMoveServer(boolean isAutoMoveServer) {
-    this.isAutoMoveServer = isAutoMoveServer;
   }
 
   public void reload(FileConfiguration config) {
@@ -75,25 +32,14 @@ public class Properties {
     isDungeonOnly = config.getBoolean("dungeon-only");
     overworldServer = config.getString("overworld-server");
     isAutoMoveServer = config.getBoolean("auto-move-server");
+    autoSave = config.getBoolean("auto-save");
   }
 
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("Properties [readFileDir=");
-    builder.append(readFileDir);
-    builder.append(", writeFileDir=");
-    builder.append(writeFileDir);
-    builder.append(", isDebug=");
-    builder.append(isDebug);
-    builder.append(", isDungeonOnly=");
-    builder.append(isDungeonOnly);
-    builder.append(", isAutoMoveServer=");
-    builder.append(isAutoMoveServer);
-    builder.append(", overworldServer=");
-    builder.append(overworldServer);
-    builder.append("]");
-    return builder.toString();
+    return "Properties [readFileDir=" + readFileDir + ", writeFileDir=" + writeFileDir + ", isDebug=" + isDebug
+        + ", isDungeonOnly=" + isDungeonOnly + ", isAutoMoveServer=" + isAutoMoveServer + ", overworldServer="
+        + overworldServer + ", autoSave=" + autoSave + "]";
   }
 
 }

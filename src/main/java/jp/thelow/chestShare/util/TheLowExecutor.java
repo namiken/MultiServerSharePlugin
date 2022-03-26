@@ -249,7 +249,12 @@ public class TheLowExecutor {
       public void run() {
         T result = asyncFunc.get();
         Bukkit.getScheduler().callSyncMethod(Main.getInstance(), () -> {
-          syncFunc.accept(result);
+          try {
+            syncFunc.accept(result);
+          } catch (Throwable e) {
+            e.printStackTrace();
+            throw e;
+          }
           return null;
         });
       }

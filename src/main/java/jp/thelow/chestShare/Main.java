@@ -26,9 +26,12 @@ import org.bukkit.scheduler.BukkitRunnable;
 import jp.thelow.chestShare.chest.DataSharedManager;
 import jp.thelow.chestShare.command.ReloadConfigCommand;
 import jp.thelow.chestShare.command.TeleportServerCommand;
+import jp.thelow.chestShare.command.TestPlayerDataCommand;
 import jp.thelow.chestShare.domain.ChangeBlockData;
 import jp.thelow.chestShare.domain.ChestData;
 import jp.thelow.chestShare.domain.DoubleChestData;
+import jp.thelow.chestShare.playerdata.DatabasePlayerDataSaveLogic;
+import jp.thelow.chestShare.playerdata.PlayerDataSaveQueue;
 
 public class Main extends JavaPlugin implements Listener {
 
@@ -60,6 +63,9 @@ public class Main extends JavaPlugin implements Listener {
     Bukkit.getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
     getCommand("tpServer").setExecutor(new TeleportServerCommand());
     getCommand("csReload").setExecutor(new ReloadConfigCommand());
+    getCommand("test_save").setExecutor(new TestPlayerDataCommand());
+
+    PlayerDataSaveQueue.init();
   }
 
   protected void createDir() {
@@ -101,6 +107,7 @@ public class Main extends JavaPlugin implements Listener {
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
     noClickMap.remove(e.getPlayer());
+    DatabasePlayerDataSaveLogic.onQuit(e.getPlayer());
   }
 
   @EventHandler

@@ -12,3 +12,7 @@ commands:
       usage: /<command>
       permission: jp.thelow.staff.csReload
       permission-message: You don't have permission
+   test_save:
+      description: Test Save player data.
+      permission: jp.thelow.staff.test_save
+      permission-message: You don't have permission
