@@ -15,6 +15,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
 import jp.thelow.chestShare.Main;
+import jp.thelow.chestShare.listener.PlayerDataListener;
+import jp.thelow.chestShare.playerdata.DataMigrator;
+import jp.thelow.chestShare.playerdata.DatabasePlayerDataSaveLogic;
+import jp.thelow.chestShare.playerdata.PlayerLimitManager;
+import jp.thelow.chestShare.util.BooleanConsumer;
 import jp.thelow.chestShare.util.TheLowExecutor;
 import jp.thelow.dungeon.api.player.TheLowPlayerManager;
 
@@ -50,6 +55,66 @@ public class TeleportServerCommand implements CommandExecutor {
   }
 
   public static boolean teleportServer(Player p, String server, Location loc) {
+    if (DataMigrator.isMigrated(p)) {
+      if (loc == null) {
+        loc = p.getLocation();
+      }
+      return innerTeleportServer(p, server, loc);
+    } else {
+      return teleportServerLegacy(p, server, loc);
+    }
+  }
+
+  private static boolean innerTeleportServer(Player p, String server, Location loc) {
+    if (Main.getInstance().getServer().getPluginManager().isPluginEnabled("DungeonCore")) {
+      TheLowPlayerManager.saveData(p);
+    }
+
+    TheLowExecutor.executeLater(20, () -> {
+
+      PlayerLimitManager.setLimited(p);
+      //プレイヤーデータ保存用の処理
+      BooleanConsumer callback = ok -> {
+        if (!ok) {
+          PlayerLimitManager.clearLimited(p);
+          p.sendMessage(ChatColor.RED + "プレイヤーデータの保存に失敗したため、サーバー移動出来ません。ダンジョン中の場合は、一旦サーバーから抜けてください");
+          return;
+        }
+
+        //サーバー移動時にデータを保存しないようにする
+        PlayerDataListener.setNoSaveOnQuit(p.getPlayer());
+
+        p.sendMessage(ChatColor.GREEN + "別鯖に移動します。");
+
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(b);
+        try {
+          out.writeUTF("Connect");
+          out.writeUTF(server);
+        } catch (IOException localIOException) {
+          localIOException.printStackTrace();
+        }
+        p.sendPluginMessage(Main.getInstance(), "BungeeCord", b.toByteArray());
+      };
+
+      //プレイヤーデータを保存する
+      DatabasePlayerDataSaveLogic.save(p, loc, callback);
+
+      //5秒後に鯖にいる場合はTP失敗と判断する
+      TheLowExecutor.executeLater(20 * 5, () -> {
+        //行動制限を解除
+        PlayerLimitManager.clearLimited(p);
+        PlayerDataListener.clearNoSaveOnQuit(p);
+
+        if (!p.isOnline()) { return; }
+        p.sendMessage(ChatColor.RED + "サーバー間の移動に失敗しました。");
+      });
+    });
+    return true;
+
+  }
+
+  private static boolean teleportServerLegacy(Player p, String server, Location loc) {
     Location beforeLoc = p.getLocation();
     if (loc != null) {
       p.teleport(loc, TeleportCause.UNKNOWN);

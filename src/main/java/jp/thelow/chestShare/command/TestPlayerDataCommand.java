@@ -1,5 +1,7 @@
 package jp.thelow.chestShare.command;
 
+import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -10,7 +12,8 @@ import org.bukkit.entity.Player;
 
 import jp.thelow.chestShare.playerdata.DatabasePlayerDataSaveLogic;
 import jp.thelow.chestShare.playerdata.PlayerDataLoadResult;
-import jp.thelow.dungeon.util.MinecraftUtil;
+import jp.thelow.chestShare.util.PlayerNameUtil;
+import jp.thelow.chestShare.util.TheLowExecutor;
 
 public class TestPlayerDataCommand implements CommandExecutor {
 
@@ -23,13 +26,13 @@ public class TestPlayerDataCommand implements CommandExecutor {
     Player p = (Player) sender;
 
     if (args[0].equals("load")) {
-      OfflinePlayer dataPlayer = MinecraftUtil.getOfflinePlayerByIdentify(args[1]);
+      OfflinePlayer dataPlayer = getOfflinePlayerByIdentify(args[1]);
       if (dataPlayer == null) {
         sender.sendMessage(ChatColor.RED + "指定したプレイヤーは存在しません。");
         return true;
       }
 
-      DatabasePlayerDataSaveLogic.load(dataPlayer.getUniqueId(), p, r -> {
+      DatabasePlayerDataSaveLogic.loadAsync(dataPlayer.getUniqueId(), p, r -> {
         if (r == PlayerDataLoadResult.BREAK_NBTTAG) {
           sender.sendMessage(ChatColor.RED + "指定したプレイヤーのデータは破損しています。");
         } else if (r == PlayerDataLoadResult.NOT_FOUND) {
@@ -40,7 +43,7 @@ public class TestPlayerDataCommand implements CommandExecutor {
       });
 
     } else if (args[0].equals("save")) {
-      OfflinePlayer dataPlayer = MinecraftUtil.getOfflinePlayerByIdentify(args[1]);
+      OfflinePlayer dataPlayer = getOfflinePlayerByIdentify(args[1]);
       if (dataPlayer == null) {
         sender.sendMessage(ChatColor.RED + "指定したプレイヤーは存在しません。");
         return true;
@@ -52,7 +55,7 @@ public class TestPlayerDataCommand implements CommandExecutor {
       }
       DatabasePlayerDataSaveLogic.save(player);
     } else if (args[0].equalsIgnoreCase("openInv")) {
-      OfflinePlayer dataPlayer = MinecraftUtil.getOfflinePlayerByIdentify(args[1]);
+      OfflinePlayer dataPlayer = getOfflinePlayerByIdentify(args[1]);
       if (dataPlayer == null) {
         sender.sendMessage(ChatColor.RED + "指定したプレイヤーは存在しません。");
         return true;
@@ -68,4 +71,12 @@ public class TestPlayerDataCommand implements CommandExecutor {
     }
     return true;
   }
+
+  public static OfflinePlayer getOfflinePlayerByIdentify(String identify) {
+    UUID uuid = (UUID) TheLowExecutor.getObjectIgnoreException(() -> {
+      return UUID.fromString(identify);
+    }, (Object) null);
+    return uuid != null ? Bukkit.getOfflinePlayer(uuid) : PlayerNameUtil.byName(identify);
+  }
+
 }

@@ -7,15 +7,15 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import jp.thelow.chestShare.Main;
 import jp.thelow.chestShare.util.TheLowExecutor;
-import jp.thelow.core.Main;
 
 public class PlayerDataSaveQueue {
 
   public static void init() {
 
     TheLowExecutor.executeTimer(20 * 15, l -> false, l -> {
-      new AutoSaveFunction().runTaskTimer(Main.plugin, 0, 3);
+      new AutoSaveFunction().runTaskTimer(Main.getInstance(), 0, 3);
     });
   }
 

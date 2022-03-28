@@ -30,8 +30,11 @@ import jp.thelow.chestShare.command.TestPlayerDataCommand;
 import jp.thelow.chestShare.domain.ChangeBlockData;
 import jp.thelow.chestShare.domain.ChestData;
 import jp.thelow.chestShare.domain.DoubleChestData;
+import jp.thelow.chestShare.listener.PlayerDataListener;
+import jp.thelow.chestShare.listener.ServerTeleportLimitListener;
 import jp.thelow.chestShare.playerdata.DatabasePlayerDataSaveLogic;
 import jp.thelow.chestShare.playerdata.PlayerDataSaveQueue;
+import jp.thelow.chestShare.util.PlayerNameUtil;
 
 public class Main extends JavaPlugin implements Listener {
 
@@ -57,6 +60,8 @@ public class Main extends JavaPlugin implements Listener {
     createDir();
 
     getServer().getPluginManager().registerEvents(this, this);
+    getServer().getPluginManager().registerEvents(new ServerTeleportLimitListener(), this);
+    getServer().getPluginManager().registerEvents(new PlayerDataListener(), this);
     DataSharedManager.start();
 
     //コマンド
@@ -66,6 +71,7 @@ public class Main extends JavaPlugin implements Listener {
     getCommand("test_save").setExecutor(new TestPlayerDataCommand());
 
     PlayerDataSaveQueue.init();
+    PlayerNameUtil.init();
   }
 
   protected void createDir() {
@@ -78,6 +84,7 @@ public class Main extends JavaPlugin implements Listener {
   @Override
   public void onDisable() {
     DataSharedManager.close();
+    DatabasePlayerDataSaveLogic.saveSyncAllPlayer();
   }
 
   //  @EventHandler
@@ -107,7 +114,6 @@ public class Main extends JavaPlugin implements Listener {
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
     noClickMap.remove(e.getPlayer());
-    DatabasePlayerDataSaveLogic.onQuit(e.getPlayer());
   }
 
   @EventHandler

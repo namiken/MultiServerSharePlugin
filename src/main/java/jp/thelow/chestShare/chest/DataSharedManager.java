@@ -26,6 +26,7 @@ import jp.thelow.chestShare.domain.ChestData;
 import jp.thelow.chestShare.domain.DoubleChestData;
 import jp.thelow.chestShare.domain.PlayerTeleportData;
 import jp.thelow.chestShare.domain.ShareData;
+import jp.thelow.chestShare.playerdata.PlayerLimitManager;
 import jp.thelow.chestShare.util.ChestSerializeUtil;
 import jp.thelow.chestShare.util.CommonUtil;
 
@@ -88,7 +89,7 @@ public class DataSharedManager {
 
           //別鯖からのリクエストにより別鯖にTPさせる
           teleportPlayerOnRequest();
-        }, 20, 20);
+        }, 20, 20 * 3);
   }
 
   private static void teleportPlayerOnRequest() {
@@ -129,6 +130,11 @@ public class DataSharedManager {
       }
 
       if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
+        continue;
+      }
+
+      //行動制限中の場合はスキップ
+      if (PlayerLimitManager.isLimited(player)) {
         continue;
       }
 

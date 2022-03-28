@@ -14,7 +14,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import jp.thelow.chestShare.Main;
-import jp.thelow.dungeon.common.TheLowRunnable;
 
 public class TheLowExecutor {
 
@@ -262,20 +261,4 @@ public class TheLowExecutor {
     }.runTaskAsynchronously(Main.getInstance());
   }
 
-  public static LbnRunnable createRunnable(TheLowRunnable runnable) {
-    runnable.beforeExecute();
-
-    return new LbnRunnable() {
-
-      @Override
-      public void run2() {
-        runnable.run();
-
-        if (runnable.isCancel()) {
-          runnable.afterExecute();
-          cancel();
-        }
-      }
-    };
-  }
 }

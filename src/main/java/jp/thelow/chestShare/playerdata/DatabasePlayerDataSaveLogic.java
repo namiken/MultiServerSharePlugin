@@ -1,17 +1,15 @@
 package jp.thelow.chestShare.playerdata;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -26,8 +24,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import jp.thelow.chestShare.Main;
 import jp.thelow.chestShare.dao.PlayerDatDataDao;
+import jp.thelow.chestShare.util.BooleanConsumer;
 import jp.thelow.chestShare.util.TheLowExecutor;
-import jp.thelow.dungeon.util.MinecraftUtil;
+import jp.thelow.thelowSql.database.ConnectionFactory;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.IInventory;
 import net.minecraft.server.v1_8_R3.ItemStack;
@@ -49,44 +48,75 @@ public class DatabasePlayerDataSaveLogic {
   }
 
   public static void save(Player p, Location loc) {
-    if (!p.isOnline()) { return; }
+    save(p, loc, b -> {
+    });
+  }
+
+  public static void saveSyncAllPlayer() {
+    try {
+      Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+      for (Player p : onlinePlayers) {
+
+        try {
+          EntityPlayer entityhuman = ((CraftPlayer) p).getHandle();
+          PlayerDatData playerDatData = PlayerDatData.fromEntity(p, p.getLocation());
+
+          NBTTagCompound nbttagcompound = new NBTTagCompound();
+          entityhuman.e(nbttagcompound);
+          String nbtag = setNbttag(nbttagcompound);
+          if (nbtag == null) { return; }
+          playerDatData.setDatData(nbtag);
+
+          playerDatDataDao.upsertSync(playerDatData);
+        } catch (Exception e) {
+          Main.getInstance().getLogger().log(Level.FINE, "プレイヤーデータの保存に失敗しました。", e);
+        }
+      }
+    } finally {
+      ConnectionFactory.safeClose();
+    }
+  }
+
+  public static void save(Player p, Location loc, BooleanConsumer callback) {
+    if (!p.isOnline()) {
+      callback.accept(true);
+      return;
+    }
 
     EntityPlayer entityhuman = ((CraftPlayer) p).getHandle();
-
-    PlayerDatData playerDatData = new PlayerDatData();
-    playerDatData.setUuid(p.getUniqueId().toString());
-    playerDatData.setHp(p.getHealth());
-    playerDatData.setMp(p.getLevel());
-    playerDatData.setLocation(MinecraftUtil.getLocationString3(loc));
-    playerDatData.setUpdateAt(Timestamp.valueOf(LocalDateTime.now()));
+    PlayerDatData playerDatData = PlayerDatData.fromEntity(p, loc);
 
     NBTTagCompound nbttagcompound = new NBTTagCompound();
     entityhuman.e(nbttagcompound);
 
     TheLowExecutor.execAsync(() -> {
       // 保管データを文字列にする
-      ByteArrayOutputStream outputstream = new ByteArrayOutputStream();
-      return saveNbttag(nbttagcompound, outputstream);
+      return setNbttag(nbttagcompound);
     }, e -> {
       if (e == null) {
         Main.getInstance().getLogger().warning("プレイヤーデータの保存に失敗しました。");
+        callback.accept(false);
         return;
       }
 
       String beforeData = beforeDataMap.get(p.getUniqueId());
       if (e.equals(beforeData)) {
         //データ内容が前回と同じ場合は何もしない
+        callback.accept(true);
         return;
       }
 
       playerDatData.setDatData(e);
 
-      playerDatDataDao.upsert(playerDatData);
+      beforeDataMap.put(p.getUniqueId(), e);
+      playerDatDataDao.upsert(playerDatData, callback);
+
     });
   }
 
-  private static String saveNbttag(NBTTagCompound nbttagcompound, ByteArrayOutputStream outputstream) {
+  private static String setNbttag(NBTTagCompound nbttagcompound) {
     try {
+      ByteArrayOutputStream outputstream = new ByteArrayOutputStream();
       NBTCompressedStreamTools.a(nbttagcompound, outputstream);
       Encoder encoder = Base64.getEncoder();
       return encoder.encodeToString(outputstream.toByteArray());
@@ -105,10 +135,7 @@ public class DatabasePlayerDataSaveLogic {
       }
 
       TheLowExecutor.execAsync(() -> {
-        Decoder decoder = Base64.getDecoder();
-        byte[] decode = decoder.decode(entity.getDatData());
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(decode);
-        return loadNbttag(inputStream);
+        return entity.toNbtCompoundIgnoreException();
       }, nbt -> {
         if (nbt == null) {
           callback.accept(PlayerDataLoadResult.BREAK_NBTTAG);
@@ -174,8 +201,45 @@ public class DatabasePlayerDataSaveLogic {
     playerDatDataDao.select(dataPlayer, syncFunction);
   }
 
+  public static PlayerDatData syncLoad(UUID dataPlayer) {
+    return playerDatDataDao.syncSelect(dataPlayer);
+  }
+
   @SuppressWarnings("deprecation")
-  public static void load(UUID dataPlayer, Player applyPlayer, Consumer<PlayerDataLoadResult> callback) {
+  public static void load(Player applyPlayer, NBTTagCompound nbt, PlayerDatData entity) {
+    //保存したデータを適用させる
+    EntityPlayer entityhuman = ((CraftPlayer) applyPlayer).getHandle();
+    World world = entityhuman.getWorld();
+    //ワールド間TPをさせるため、スポーン時のワールドは「world」にする
+    nbt.setString("world", world.getWorld().getName());
+    nbt.remove("WorldUUIDMost");
+    nbt.remove("WorldUUIDLeast");
+
+    entityhuman.f(nbt);
+
+    Location location = entity.getPlayerLocation();
+    applyPlayer.teleport(location);
+
+    //TPがうまく行かないことがあるので念のため時間差でもTPする
+    TheLowExecutor.executeLater(3, () -> {
+      applyPlayer.teleport(location);
+    });
+
+    applyPlayer.setHealth(Math.min(applyPlayer.getMaxHealth(), entity.getHp()));
+    applyPlayer.setLevel(entity.getMp());
+
+    //最大値の適用が遅れる可能性があるので２秒後に適用する
+    TheLowExecutor.executeLater(20 * 2, () -> {
+      applyPlayer.setHealth(Math.min(applyPlayer.getMaxHealth(), entity.getHp()));
+      applyPlayer.setLevel(entity.getMp());
+    });
+
+    applyPlayer.updateInventory();
+
+    forceApplyGamemode(applyPlayer);
+  }
+
+  public static void loadAsync(UUID dataPlayer, Player applyPlayer, Consumer<PlayerDataLoadResult> callback) {
 
     Consumer<PlayerDatData> syncFunction = entity -> {
       if (entity == null) {
@@ -184,41 +248,14 @@ public class DatabasePlayerDataSaveLogic {
       }
 
       TheLowExecutor.execAsync(() -> {
-        Decoder decoder = Base64.getDecoder();
-        byte[] decode = decoder.decode(entity.getDatData());
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(decode);
-        return loadNbttag(inputStream);
+        return entity.toNbtCompoundIgnoreException();
       }, nbt -> {
         if (nbt == null) {
           callback.accept(PlayerDataLoadResult.BREAK_NBTTAG);
           return;
         }
 
-        //保存したデータを適用させる
-        EntityPlayer entityhuman = ((CraftPlayer) applyPlayer).getHandle();
-        World world = entityhuman.getWorld();
-        //ワールド間TPをさせるため、スポーン時のワールドは「world」にする
-        nbt.setString("world", world.getWorld().getName());
-        nbt.remove("WorldUUIDMost");
-        nbt.remove("WorldUUIDLeast");
-
-        entityhuman.f(nbt);
-
-        Location location = entity.getPlayerLocation();
-        applyPlayer.teleport(location);
-
-        applyPlayer.setHealth(Math.min(applyPlayer.getMaxHealth(), entity.getHp()));
-        applyPlayer.setLevel(entity.getMp());
-
-        //最大値の適用が遅れる可能性があるので２秒後に適用する
-        TheLowExecutor.executeLater(20 * 2, () -> {
-          applyPlayer.setHealth(Math.min(applyPlayer.getMaxHealth(), entity.getHp()));
-          applyPlayer.setLevel(entity.getMp());
-        });
-
-        applyPlayer.updateInventory();
-
-        forceApplyGamemode(applyPlayer);
+        load(applyPlayer, nbt, entity);
         callback.accept(PlayerDataLoadResult.SUCCESS);
       });
     };
@@ -238,15 +275,6 @@ public class DatabasePlayerDataSaveLogic {
     craftPlayer.getHandle().playerInteractManager.setGameMode(EnumGamemode.getById(mode.getValue()));
     craftPlayer.getHandle().fallDistance = 0.0F;
     craftPlayer.getHandle().playerConnection.sendPacket(new PacketPlayOutGameStateChange(3, mode.getValue()));
-  }
-
-  private static NBTTagCompound loadNbttag(ByteArrayInputStream inputStream) {
-    try {
-      return NBTCompressedStreamTools.a(inputStream);
-    } catch (IOException e) {
-      e.printStackTrace();
-      return null;
-    }
   }
 
   public static void onQuit(Player p) {

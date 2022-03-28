@@ -1,5 +1,6 @@
 name: ChestShare
 version: 1.0
+depend: [TheLowSql]
 main: jp.thelow.chestShare.Main
 commands:
    tpServer:
