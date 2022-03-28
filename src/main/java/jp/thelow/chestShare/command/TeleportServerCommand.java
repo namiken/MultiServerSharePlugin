@@ -70,6 +70,19 @@ public class TeleportServerCommand implements CommandExecutor {
       TheLowPlayerManager.saveData(p);
     }
 
+    //サーバー移動時にデータを保存しないようにする
+    PlayerDataListener.setNoSave(p.getPlayer());
+
+    //5秒後に鯖にいる場合はTP失敗と判断する
+    TheLowExecutor.executeLater(20 * 5, () -> {
+      //行動制限を解除
+      PlayerLimitManager.clearLimited(p);
+      PlayerDataListener.clearNoSaveOnQuit(p);
+
+      if (!p.isOnline()) { return; }
+      p.sendMessage(ChatColor.RED + "サーバー間の移動に失敗しました。");
+    });
+
     TheLowExecutor.executeLater(20, () -> {
 
       PlayerLimitManager.setLimited(p);
@@ -80,9 +93,6 @@ public class TeleportServerCommand implements CommandExecutor {
           p.sendMessage(ChatColor.RED + "プレイヤーデータの保存に失敗したため、サーバー移動出来ません。ダンジョン中の場合は、一旦サーバーから抜けてください");
           return;
         }
-
-        //サーバー移動時にデータを保存しないようにする
-        PlayerDataListener.setNoSaveOnQuit(p.getPlayer());
 
         p.sendMessage(ChatColor.GREEN + "別鯖に移動します。");
 
@@ -100,15 +110,6 @@ public class TeleportServerCommand implements CommandExecutor {
       //プレイヤーデータを保存する
       DatabasePlayerDataSaveLogic.save(p, loc, callback);
 
-      //5秒後に鯖にいる場合はTP失敗と判断する
-      TheLowExecutor.executeLater(20 * 5, () -> {
-        //行動制限を解除
-        PlayerLimitManager.clearLimited(p);
-        PlayerDataListener.clearNoSaveOnQuit(p);
-
-        if (!p.isOnline()) { return; }
-        p.sendMessage(ChatColor.RED + "サーバー間の移動に失敗しました。");
-      });
     });
     return true;
 

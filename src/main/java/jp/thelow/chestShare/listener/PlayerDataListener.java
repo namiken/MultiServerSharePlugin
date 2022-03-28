@@ -64,12 +64,16 @@ public class PlayerDataListener implements Listener {
     clearNoSaveOnQuit(e.getPlayer());
   }
 
-  public static void setNoSaveOnQuit(Player p) {
+  public static void setNoSave(Player p) {
     noSavePlayer.put(p.getUniqueId(), "");
   }
 
   public static void clearNoSaveOnQuit(Player p) {
     noSavePlayer.remove(p.getUniqueId());
+  }
+
+  public static boolean isNoSave(Player p) {
+    return noSavePlayer.containsKey(p.getUniqueId());
   }
 
   @EventHandler

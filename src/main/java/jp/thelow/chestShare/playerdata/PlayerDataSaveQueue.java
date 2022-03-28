@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import jp.thelow.chestShare.Main;
+import jp.thelow.chestShare.listener.PlayerDataListener;
 import jp.thelow.chestShare.util.TheLowExecutor;
 
 public class PlayerDataSaveQueue {
@@ -36,7 +37,9 @@ public class PlayerDataSaveQueue {
       }
 
       Player player = iterator.next();
-      DatabasePlayerDataSaveLogic.save(player);
+      if (PlayerDataListener.isNoSave(player)) {
+        DatabasePlayerDataSaveLogic.save(player);
+      }
     }
 
   }

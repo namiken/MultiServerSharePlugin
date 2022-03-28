@@ -220,6 +220,8 @@ public class DatabasePlayerDataSaveLogic {
     Location location = entity.getPlayerLocation();
     applyPlayer.teleport(location);
 
+    Main.getInstance().getLogger().info("プレイヤー情報を適用させます。:" + applyPlayer.getName() + "@" + entity.getLocation());
+
     //TPがうまく行かないことがあるので念のため時間差でもTPする
     TheLowExecutor.executeLater(3, () -> {
       applyPlayer.teleport(location);
