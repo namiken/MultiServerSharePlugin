@@ -1,25 +1,22 @@
 package jp.thelow.chestShare;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
-import org.bukkit.block.Chest;
-import org.bukkit.block.DoubleChest;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.InventoryView;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -41,6 +38,8 @@ public class Main extends JavaPlugin implements Listener {
   public static final String TP_PLAYER_FOLDER_NAME = "tpPlayer";
 
   public static Set<Player> noClickMap = new HashSet<>();
+
+  public static Map<UUID, String> dataMap = new HashMap<>();
 
   private static Main instance;
 
@@ -127,18 +126,19 @@ public class Main extends JavaPlugin implements Listener {
 
   @EventHandler
   public void InventoryCloseEvent(InventoryCloseEvent e) {
-    InventoryView view = e.getView();
-    Inventory topInventory = view.getTopInventory();
-    if (topInventory.getType() != InventoryType.CHEST) { return; }
-
-    InventoryHolder holder = topInventory.getHolder();
-    if (holder == null) { return; }
-
-    if (holder instanceof DoubleChest) {
-      DataSharedManager.onCloseDoubleChest((DoubleChest) holder);
-    } else if (holder instanceof Chest) {
-      DataSharedManager.onCloseChest((Chest) holder);
-    }
+    //一旦チェストは同期しない
+    //    InventoryView view = e.getView();
+    //    Inventory topInventory = view.getTopInventory();
+    //    if (topInventory.getType() != InventoryType.CHEST) { return; }
+    //
+    //    InventoryHolder holder = topInventory.getHolder();
+    //    if (holder == null) { return; }
+    //
+    //    if (holder instanceof DoubleChest) {
+    //      DataSharedManager.onCloseDoubleChest((DoubleChest) holder);
+    //    } else if (holder instanceof Chest) {
+    //      DataSharedManager.onCloseChest((Chest) holder);
+    //    }
   }
 
   public static Main getInstance() {
@@ -146,6 +146,11 @@ public class Main extends JavaPlugin implements Listener {
   }
 
   public Properties getProoerties() {
+    return prooerties;
+  }
+
+  public Properties reloadProoerties() {
+    prooerties = new Properties(this.getConfig());
     return prooerties;
   }
 }

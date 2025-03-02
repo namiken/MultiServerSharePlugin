@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 
 import jp.thelow.chestShare.playerdata.PlayerDatData;
 import jp.thelow.chestShare.util.BooleanConsumer;
+import jp.thelow.dungeon.util.JavaUtil;
 import jp.thelow.thelowSql.DataStore;
 import jp.thelow.thelowSql.DataStoreFactory;
 import jp.thelow.thelowSql.database.ConnectionFactory;
@@ -30,9 +31,13 @@ public class PlayerDatDataDao {
     });
   }
 
-  public PlayerDatData syncSelect(UUID uuid) {
+  public PlayerDatData syncSelect(UUID uuid, String type) {
     try {
-      return thelowDao.selectOne(" UUID = ?", new Object[] { uuid.toString() });
+      if (JavaUtil.isEmpty(type)) {
+        return thelowDao.selectOne(" UUID = ? ", new Object[] { uuid.toString() });
+      } else {
+        return thelowDao.selectOne(" UUID = ? and type = ?", new Object[] { uuid.toString(), type });
+      }
     } finally {
       ConnectionFactory.safeClose();
     }

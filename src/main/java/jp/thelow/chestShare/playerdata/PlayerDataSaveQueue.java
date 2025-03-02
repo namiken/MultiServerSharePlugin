@@ -37,7 +37,7 @@ public class PlayerDataSaveQueue {
       }
 
       Player player = iterator.next();
-      if (PlayerDataListener.isNoSave(player)) {
+      if (!PlayerDataListener.isNoSave(player)) {
         DatabasePlayerDataSaveLogic.save(player);
       }
     }

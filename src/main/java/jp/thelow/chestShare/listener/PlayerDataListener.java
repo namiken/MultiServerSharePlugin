@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
@@ -14,7 +15,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import jp.thelow.chestShare.Main;
-import jp.thelow.chestShare.playerdata.DataMigrator;
 import jp.thelow.chestShare.playerdata.DatabasePlayerDataSaveLogic;
 import jp.thelow.chestShare.playerdata.PlayerDatData;
 import jp.thelow.chestShare.playerdata.PlayerLimitManager;
@@ -28,16 +28,17 @@ public class PlayerDataListener implements Listener {
 
   private static Map<UUID, LoadPlayerData> loadPlayerDataMap = new ConcurrentHashMap<>();
 
-  @EventHandler
+  @EventHandler(priority = EventPriority.HIGHEST)
   public void onAsyncPlayerJoinEvent(AsyncPlayerPreLoginEvent e) {
-
-    if (!DataMigrator.isMigrated(e.getUniqueId())) { return; }
+    String type = Main.dataMap.remove(e.getUniqueId());
 
     //プレイヤーデータを同期処理でロードする
     try {
-      PlayerDatData playerDatData = DatabasePlayerDataSaveLogic.syncLoad(e.getUniqueId());
+      PlayerDatData playerDatData = DatabasePlayerDataSaveLogic.syncLoad(e.getUniqueId(), type);
       if (playerDatData != null) {
         loadPlayerDataMap.put(e.getUniqueId(), new LoadPlayerData(playerDatData, playerDatData.toNbtCompound()));
+      } else {
+        Main.getInstance().getLogger().info("PlayerDatデータが存在しないため、取得しませんでした。ローカルファイルデータから適用されます");
       }
     } catch (Exception ex) {
       e.disallow(Result.KICK_OTHER, "プレイヤーデータのロードに失敗したため、ログイン出来ませんでした。もう一度やり直してください。");
@@ -49,8 +50,6 @@ public class PlayerDataListener implements Listener {
   public void onPlayerJoinEvent(PlayerJoinEvent e) {
 
     Player player = e.getPlayer();
-    if (!DataMigrator.isMigrated(player)) { return; }
-
     LoadPlayerData playerData = loadPlayerDataMap.remove(player.getUniqueId());
     if (playerData == null) {
       Main.getInstance().getLogger().info("PlayerDatデータが存在しないため、適用をスキップしました。");
@@ -82,7 +81,9 @@ public class PlayerDataListener implements Listener {
     DatabasePlayerDataSaveLogic.onQuit(e.getPlayer());
 
     if (!noSavePlayer.remove(e.getPlayer().getUniqueId(), "")) {
-      DatabasePlayerDataSaveLogic.save(e.getPlayer());
+      DatabasePlayerDataSaveLogic.save(e.getPlayer(), e.getPlayer().getLocation(), ok -> {
+        Main.getInstance().getLogger().info("サーバーから退出したため、" + e.getPlayer().getName() + "のデータを保存しました。");
+      });
     }
   }
 

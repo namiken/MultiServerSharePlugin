@@ -5,4 +5,9 @@ dungeon-only : false
 overworld-server : thelow
 auto-move-server: false
 auto-save: true
-
+allow-uuid:
+  - 67d7d0a0-2e5a-498c-b74b-ea72e0b10b3d # Namiken
+  - d5aa162a-954a-3faa-8a8c-a9775682486d # Namiken
+  - 1076481c-0716-4c2e-b067-8708abab7174 # こるく
+  - 07763a30-0da9-4a86-ace1-fbf4e897db25  # さばぬし
+  - e293dbb4-369a-4937-b030-cbbb50fbf2e4 # ebiten

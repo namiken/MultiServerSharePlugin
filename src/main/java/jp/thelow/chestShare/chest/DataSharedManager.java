@@ -24,7 +24,6 @@ import jp.thelow.chestShare.command.TeleportServerCommand;
 import jp.thelow.chestShare.domain.ChangeBlockData;
 import jp.thelow.chestShare.domain.ChestData;
 import jp.thelow.chestShare.domain.DoubleChestData;
-import jp.thelow.chestShare.domain.PlayerTeleportData;
 import jp.thelow.chestShare.domain.ShareData;
 import jp.thelow.chestShare.playerdata.PlayerLimitManager;
 import jp.thelow.chestShare.util.ChestSerializeUtil;
@@ -81,43 +80,15 @@ public class DataSharedManager {
     // 1秒に一回ルーチンを行う
     Bukkit.getScheduler().runTaskTimerAsynchronously(Main.getInstance(),
         () -> {
-          //チェスト情報を共有
-          shareChest();
+          //          //チェスト情報を共有
+          //          shareChest();
 
           //地上ワールドのPlayerをTPさせる
           teleportPlayerOnOverWorld();
 
           //別鯖からのリクエストにより別鯖にTPさせる
-          teleportPlayerOnRequest();
+          //          teleportPlayerOnRequest();
         }, 20, 20 * 3);
-  }
-
-  private static void teleportPlayerOnRequest() {
-    String readFileDir = Main.getInstance().getProoerties().getReadFileDir();
-    File file = new File(readFileDir, Main.TP_PLAYER_FOLDER_NAME);
-    File[] listFiles = file.listFiles();
-    if (listFiles == null) {
-      listFiles = new File[0];
-    }
-    List<PlayerTeleportData> shareDatas = Stream.of(listFiles)
-        .filter(f -> f.isFile()).map(f -> ChestSerializeUtil.read(f)).filter(Objects::nonNull)
-        .filter(i -> i instanceof PlayerTeleportData).map(i -> (PlayerTeleportData) i)
-        .collect(Collectors.toList());
-
-    for (PlayerTeleportData playerTeleportData : shareDatas) {
-      if (!playerTeleportData.isOnline()) { return; }
-
-      //プレイヤーがオンラインの場合はTPさせる
-      CommonUtil.execSync(() -> {
-        Player player = Bukkit.getPlayer(playerTeleportData.getUuid());
-        Location location = playerTeleportData.getLoc();
-        TeleportServerCommand.teleportServer(player, playerTeleportData.getServerName(), location);
-        Main.getInstance().getLogger().info(
-            player.getName() + "をメインサーバーにTPさせました。(2)" + location.getWorld() + ":" + location.getBlockX() + ","
-                + location.getBlockY() + "," + location.getBlockZ());
-      });
-
-    }
   }
 
   protected static void teleportPlayerOnOverWorld() {

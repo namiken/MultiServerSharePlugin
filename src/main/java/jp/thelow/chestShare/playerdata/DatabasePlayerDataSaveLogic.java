@@ -25,6 +25,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import jp.thelow.chestShare.Main;
 import jp.thelow.chestShare.dao.PlayerDatDataDao;
 import jp.thelow.chestShare.util.BooleanConsumer;
+import jp.thelow.chestShare.util.CommonUtil;
 import jp.thelow.chestShare.util.TheLowExecutor;
 import jp.thelow.thelowSql.database.ConnectionFactory;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
@@ -201,12 +202,14 @@ public class DatabasePlayerDataSaveLogic {
     playerDatDataDao.select(dataPlayer, syncFunction);
   }
 
-  public static PlayerDatData syncLoad(UUID dataPlayer) {
-    return playerDatDataDao.syncSelect(dataPlayer);
+  public static PlayerDatData syncLoad(UUID dataPlayer, String type) {
+    return playerDatDataDao.syncSelect(dataPlayer, type);
   }
 
   @SuppressWarnings("deprecation")
   public static void load(Player applyPlayer, NBTTagCompound nbt, PlayerDatData entity) {
+    Location beforeLocation = applyPlayer.getLocation();
+
     //保存したデータを適用させる
     EntityPlayer entityhuman = ((CraftPlayer) applyPlayer).getHandle();
     World world = entityhuman.getWorld();
@@ -223,8 +226,13 @@ public class DatabasePlayerDataSaveLogic {
     Main.getInstance().getLogger().info("プレイヤー情報を適用させます。:" + applyPlayer.getName() + "@" + entity.getLocation());
 
     //TPがうまく行かないことがあるので念のため時間差でもTPする
-    TheLowExecutor.executeLater(3, () -> {
-      applyPlayer.teleport(location);
+    TheLowExecutor.executeLater(5, () -> {
+      if (location.getWorld() != beforeLocation.getWorld() || beforeLocation.distanceSquared(location) > 2) {
+        Main.getInstance().getLogger()
+            .info("適用後に別の場所にTPしたためもとに場所に戻しました。:" + applyPlayer.getName() + "@"
+                + CommonUtil.getLocationString3(beforeLocation) + " -> " + entity.getLocation());
+        applyPlayer.teleport(location);
+      }
     });
 
     applyPlayer.setHealth(Math.min(applyPlayer.getMaxHealth(), entity.getHp()));

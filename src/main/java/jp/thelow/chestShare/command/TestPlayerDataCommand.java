@@ -1,6 +1,15 @@
 package jp.thelow.chestShare.command;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -8,8 +17,13 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
+import jp.thelow.chestShare.Main;
 import jp.thelow.chestShare.playerdata.DatabasePlayerDataSaveLogic;
 import jp.thelow.chestShare.playerdata.PlayerDataLoadResult;
 import jp.thelow.chestShare.util.PlayerNameUtil;
@@ -17,6 +31,7 @@ import jp.thelow.chestShare.util.TheLowExecutor;
 
 public class TestPlayerDataCommand implements CommandExecutor {
 
+  @SuppressWarnings("unchecked")
   @Override
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     if (!(sender instanceof Player)) {
@@ -42,6 +57,45 @@ public class TestPlayerDataCommand implements CommandExecutor {
         }
       });
 
+    } else if (args[0].equals("loadFile")) {
+      File file = new File(args[1]);
+      if (!file.isFile()) {
+        sender.sendMessage(ChatColor.RED + "指定したファイルが存在しません。");
+        return true;
+      }
+      TheLowExecutor.execAsync(() -> {
+        try (
+            ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(args[1])),
+                StandardCharsets.UTF_8);) {
+          ZipEntry zipentry = zis.getNextEntry();
+          if (zipentry == null) {
+            Main.getInstance().getLogger().warning("Zipファイル内にファイルが存在しません。");
+            return null;
+          }
+
+          ByteArrayOutputStream bos = new ByteArrayOutputStream();
+          byte[] data = new byte[1024];
+          int count = 0;
+          while ((count = zis.read(data)) != -1) {
+            bos.write(data, 0, count);
+          }
+
+          YamlConfiguration configuration = new YamlConfiguration();
+          configuration.loadFromString(new String(bos.toByteArray(), StandardCharsets.UTF_8));
+          return (List<ItemStack>) configuration.get("contents");
+
+        } catch (IOException | InvalidConfigurationException e) {
+          e.printStackTrace();
+          return null;
+        }
+      }, entity -> {
+        Inventory inventory = Bukkit.createInventory(null, entity.size());
+        for (int i = 0; i < entity.size(); i++) {
+          ItemStack itemStack = entity.get(i);
+          inventory.setItem(i, itemStack);
+        }
+        ((Player) sender).openInventory(inventory);
+      });
     } else if (args[0].equals("save")) {
       OfflinePlayer dataPlayer = getOfflinePlayerByIdentify(args[1]);
       if (dataPlayer == null) {

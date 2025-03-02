@@ -18,6 +18,9 @@ public class PlayerNameUtil {
       if (offlinePlayer == null) {
         continue;
       }
+      if (offlinePlayer.getName() == null) {
+        continue;
+      }
       map.put(offlinePlayer.getName().toLowerCase(), offlinePlayer.getUniqueId());
     }
 
