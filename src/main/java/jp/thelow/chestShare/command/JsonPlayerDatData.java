@@ -1,14 +1,11 @@
-package jp.thelow.chestShare.playerdata;
+package jp.thelow.chestShare.command;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -22,7 +19,7 @@ import net.minecraft.server.v1_8_R3.NBTTagCompound;
 
 @Table("PLAYER_DAT_DATA")
 @Data
-public class PlayerDatData {
+public class JsonPlayerDatData {
   @Id("UUID")
   @Column("UUID")
   private String uuid;
@@ -43,22 +40,12 @@ public class PlayerDatData {
   @Column("SERVER")
   private String server;
 
+  @SerializedName("update_at")
   @Column("UPDATE_AT")
-  private Timestamp updateAt;
+  private String updateAt;
 
   public Location getPlayerLocation() {
     return CommonUtil.getLocationByString(location);
-  }
-
-  public static PlayerDatData fromEntity(Player p, Location loc) {
-    PlayerDatData playerDatData = new PlayerDatData();
-    playerDatData.setUuid(p.getUniqueId().toString());
-    playerDatData.setHp(p.getHealth());
-    playerDatData.setMp(p.getLevel());
-    playerDatData.setLocation(CommonUtil.getLocationString3(loc));
-    playerDatData.setUpdateAt(Timestamp.valueOf(LocalDateTime.now()));
-
-    return playerDatData;
   }
 
   public NBTTagCompound toNbtCompound() throws IOException {

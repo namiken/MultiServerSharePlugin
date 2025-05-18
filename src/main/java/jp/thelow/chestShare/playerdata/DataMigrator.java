@@ -9,8 +9,8 @@ import jp.thelow.chestShare.Main;
 public class DataMigrator {
 
   public static boolean isMigrated(Player p) {
-    return isMigrated(p.getUniqueId());
-    //    return true;
+    //    return isMigrated(p.getUniqueId());
+    return true;
   }
 
   public static boolean isMigrated(UUID uuid) {

@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -17,21 +17,23 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+
+import com.google.gson.Gson;
 
 import jp.thelow.chestShare.Main;
 import jp.thelow.chestShare.playerdata.DatabasePlayerDataSaveLogic;
 import jp.thelow.chestShare.playerdata.PlayerDataLoadResult;
 import jp.thelow.chestShare.util.PlayerNameUtil;
 import jp.thelow.chestShare.util.TheLowExecutor;
+import net.minecraft.server.v1_8_R3.NBTTagCompound;
+import net.minecraft.server.v1_8_R3.NBTTagList;
 
 public class TestPlayerDataCommand implements CommandExecutor {
 
-  @SuppressWarnings("unchecked")
   @Override
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     if (!(sender instanceof Player)) {
@@ -80,11 +82,23 @@ public class TestPlayerDataCommand implements CommandExecutor {
             bos.write(data, 0, count);
           }
 
-          YamlConfiguration configuration = new YamlConfiguration();
-          configuration.loadFromString(new String(bos.toByteArray(), StandardCharsets.UTF_8));
-          return (List<ItemStack>) configuration.get("contents");
+          JsonPlayerDatData fromJson = new Gson().fromJson(new String(bos.toByteArray(), StandardCharsets.UTF_8),
+              JsonPlayerDatData.class);
 
-        } catch (IOException | InvalidConfigurationException e) {
+          NBTTagCompound nbtCompound = fromJson.toNbtCompound();
+
+          NBTTagList inv = (NBTTagList) nbtCompound.get("Inventory");
+
+          ArrayList<ItemStack> list = new ArrayList<ItemStack>();
+          for (int i = 0; i < inv.size(); i++) {
+            net.minecraft.server.v1_8_R3.ItemStack itemStack = net.minecraft.server.v1_8_R3.ItemStack
+                .createStack(inv.get(i));
+            list.add(CraftItemStack.asBukkitCopy(itemStack));
+          }
+
+          return list;
+
+        } catch (IOException e) {
           e.printStackTrace();
           return null;
         }

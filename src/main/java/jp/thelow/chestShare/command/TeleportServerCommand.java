@@ -55,6 +55,10 @@ public class TeleportServerCommand implements CommandExecutor {
       }
     }
 
+    if (server.equals("thelow0")) {
+      server = "thelow3";
+    }
+
     //TPさせる
     return teleportServer(p, server, loc);
   }
