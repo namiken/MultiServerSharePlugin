@@ -29,6 +29,11 @@
 			<scope>provided</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>DungeonCore</groupId>
+			<artifactId>DungeonCore</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>
