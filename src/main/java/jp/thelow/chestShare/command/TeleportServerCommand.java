@@ -97,37 +97,35 @@ public class TeleportServerCommand implements CommandExecutor {
     }
     //全体を1秒遅延させる(dupe対策)
     TheLowExecutor.executeLater(20, () -> {
-      TheLowExecutor.executeLater(20, () -> {
 
-        //プレイヤーデータ保存用の処理
-        BooleanConsumer callback = ok -> {
-          Main.getInstance().getLogger().info("サーバー移動のため、" + p.getName() + "のデータを保存しました。");
-          if (!ok) {
-            PlayerLimitManager.clearLimited(p);
-            p.sendMessage(ChatColor.RED + "プレイヤーデータの保存に失敗したため、サーバー移動出来ません。ダンジョン中の場合は、一旦サーバーから抜けてください");
-            return;
-          }
+      //プレイヤーデータ保存用の処理
+      BooleanConsumer callback = ok -> {
+        Main.getInstance().getLogger().info("サーバー移動のため、" + p.getName() + "のデータを保存しました。");
+        if (!ok) {
+          PlayerLimitManager.clearLimited(p);
+          p.sendMessage(ChatColor.RED + "プレイヤーデータの保存に失敗したため、サーバー移動出来ません。ダンジョン中の場合は、一旦サーバーから抜けてください");
+          return;
+        }
 
-          p.sendMessage(ChatColor.GREEN + "別鯖に移動します。");
+        p.sendMessage(ChatColor.GREEN + "別鯖に移動します。");
 
-          ByteArrayOutputStream b = new ByteArrayOutputStream();
-          DataOutputStream out = new DataOutputStream(b);
-          try {
-            out.writeUTF("Connect");
-            out.writeUTF(server);
-          } catch (IOException localIOException) {
-            localIOException.printStackTrace();
-          }
-          p.sendPluginMessage(Main.getInstance(), "BungeeCord", b.toByteArray());
-        };
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(b);
+        try {
+          out.writeUTF("Connect");
+          out.writeUTF(server);
+        } catch (IOException localIOException) {
+          localIOException.printStackTrace();
+        }
+        p.sendPluginMessage(Main.getInstance(), "BungeeCord", b.toByteArray());
+      };
 
-        //プレイヤーデータを保存する
-        DatabasePlayerDataSaveLogic.save(p, loc, callback);
+      //プレイヤーデータを保存する
+      DatabasePlayerDataSaveLogic.save(p, loc, callback);
 
-        //アイテム除去
-        removeItemNearPlayer(p);
+      //アイテム除去
+      removeItemNearPlayer(p);
 
-      });
     });
     return true;
 
