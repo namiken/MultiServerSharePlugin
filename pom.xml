@@ -17,9 +17,11 @@
 	<dependencies>
 		<!-- Bukkit API -->
 		<dependency>
-			<groupId>org.bukkit</groupId>
-			<artifactId>bukkit</artifactId>
+			<groupId>spigot</groupId>
+			<artifactId>spigot</artifactId>
 			<version>${bukkit.version}</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/lib/spigot-1.8.8.jar</systemPath>
 		</dependency>
 				<!-- Lombok -->
 		<dependency>
@@ -29,11 +31,6 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<dependency>
-			<groupId>DungeonCore</groupId>
-			<artifactId>DungeonCore</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
 	</dependencies>
 
 	<build>

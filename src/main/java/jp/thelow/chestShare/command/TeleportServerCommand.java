@@ -125,7 +125,7 @@ public class TeleportServerCommand implements CommandExecutor {
         DatabasePlayerDataSaveLogic.save(p, loc, callback);
 
         //アイテム除去
-        removeItemNearPlayer(p);
+        TheLowExecutor.executeLater(1, () -> removeItemNearPlayer(p));
 
       });
     });
@@ -134,6 +134,12 @@ public class TeleportServerCommand implements CommandExecutor {
   }
 
   public static void removeItemNearPlayer(Player p) {
+    Location loc = p.getLocation();
+    //チャンク読み込み
+    if (!loc.getChunk().isLoaded()) {
+      loc.getWorld().loadChunk(loc.getChunk());
+
+    }
     //周辺に落ちてるアイテムを自動消去
     p.getNearbyEntities(6, 6, 6).stream().filter(e -> e instanceof Item).map(e -> (Item) e)
         .filter(i -> i.getTicksLived() < 20).forEach(i -> i.remove());
