@@ -83,7 +83,7 @@ public class TeleportServerCommand implements CommandExecutor {
     PlayerLimitManager.setLimited(p);
 
     //アイテム除去
-    TheLowExecutor.executeLater(1, () -> removeItemNearPlayer(p));
+    TheLowExecutor.executeLater(1, () -> removeItemNearPlayer(p.getLocation().clone()));
 
     //5(+1)秒後に鯖にいる場合はTP失敗と判断する
     TheLowExecutor.executeLater(20 * 6, () -> {
@@ -130,16 +130,15 @@ public class TeleportServerCommand implements CommandExecutor {
 
   }
 
-  public static void removeItemNearPlayer(Player p) {
-    Location loc = p.getLocation();
+  public static void removeItemNearPlayer(Location loc) {
     //チャンク読み込み
     if (!loc.getChunk().isLoaded()) {
       loc.getWorld().loadChunk(loc.getChunk());
 
     }
     //周辺に落ちてるアイテムを自動消去
-    p.getNearbyEntities(6, 6, 6).stream().filter(e -> e instanceof Item).map(e -> (Item) e)
-        .filter(i -> i.getTicksLived() < 20).forEach(i -> i.remove());
+    loc.getWorld().getNearbyEntities(loc, 10, 10, 10).stream().filter(e -> e instanceof Item).map(e -> (Item) e)
+        .filter(i -> i.getTicksLived() < 40).forEach(i -> i.remove());
     //);
   }
 
