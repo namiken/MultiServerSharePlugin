@@ -82,6 +82,9 @@ public class TeleportServerCommand implements CommandExecutor {
     //行動制限を追加
     PlayerLimitManager.setLimited(p);
 
+    //アイテム除去
+    TheLowExecutor.executeLater(1, () -> removeItemNearPlayer(p));
+
     //5(+1)秒後に鯖にいる場合はTP失敗と判断する
     TheLowExecutor.executeLater(20 * 6, () -> {
       //行動制限を解除
@@ -121,9 +124,6 @@ public class TeleportServerCommand implements CommandExecutor {
 
       //プレイヤーデータを保存する
       DatabasePlayerDataSaveLogic.save(p, loc, callback);
-
-      //アイテム除去
-      TheLowExecutor.executeLater(1, () -> removeItemNearPlayer(p));
 
     });
     return true;
