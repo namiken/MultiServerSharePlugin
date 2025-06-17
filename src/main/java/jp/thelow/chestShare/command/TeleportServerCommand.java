@@ -77,6 +77,12 @@ public class TeleportServerCommand implements CommandExecutor {
 
   private static boolean innerTeleportServer(Player p, String server, Location loc) {
 
+    //プレイヤーデータを保存する (最優先)
+    BooleanConsumer tempSaveCallBack = ok -> {
+      Main.getInstance().getLogger().info("サーバー移動のため、" + p.getName() + "のデータを保存しました。");
+    };
+    DatabasePlayerDataSaveLogic.save(p, loc, tempSaveCallBack);
+
     //サーバー移動時にデータを保存しないようにする
     PlayerDataListener.setNoSave(p.getPlayer());
     //行動制限を追加
